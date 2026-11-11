@@ -574,7 +574,7 @@ def best_chi2_fits(output_chi2, N_best_fits=1, model_dir_ori=None, ori_res=False
 	return out
 
 ##################################################
-def generate_model_spectrum(params, model, grid=None, model_dir=None, save_spectrum=False):
+def generate_model_spectrum(params, model, grid=None, model_dir=None, save_spectrum=False, free_params=None):
 	'''
 	Description:
 	------------
@@ -667,7 +667,9 @@ def generate_model_spectrum(params, model, grid=None, model_dir=None, save_spect
 			                f'spectra in "model_dir", which is [{params_models[param].min()}, {params_models[param].max()}]')
 
 	# sort input params in the same order as the dictionary with free parameters returned by `models.separate_params`
-	params = models.reorder_dict(params, models.Models(model).free_params)
+	# config = models.Models(model)._load_model_configs()
+	if free_params == None: free_params = model.free_params
+	params = models.reorder_dict(params, free_params)
 
 	# read model grid if not provided
 	if grid is None:
