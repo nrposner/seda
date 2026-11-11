@@ -7,6 +7,14 @@ from astropy import units as u
 from .. import utils
 from sys import exit
 
+# defining constants for spectral density unit conversions once
+EQ = u.spectral_density(1.0*u.micron)
+# equal to 3.33564095e+12
+ERG_TO_JY = (1.0*u.erg/u.s/u.cm**2/(u.nm*0.1)).to(u.Jy, equivalencies=EQ).value
+# equal to 2.99792458e-13
+JY_TO_ERG = (1.0*u.Jy).to(u.erg/u.s/u.cm**2/(u.nm*0.1), equivalencies=EQ).value
+
+
 def synthetic_photometry(wl, flux, filters, flux_unit, eflux=None, detector='photon', svo_data=None, out_file=None): 
 	'''
 	Description:
@@ -289,15 +297,26 @@ def convert_flux(flux, wl, unit_in, unit_out, eflux=None):
 
 	if unit_in=='erg/s/cm2/A':
         # call spectral density fewer times when the inner branch runs
-		equivalencies = u.spectral_density(wl*u.micron)
-		flux_out = (flux*u.erg/u.s/u.cm**2/(u.nm*0.1)).to(u.Jy, equivalencies=equivalencies).value
+
+        # a faster version of:
+		# equivalencies = u.spectral_density(wl*u.micron)
+		# flux_out = (flux*u.erg/u.s/u.cm**2/(u.nm*0.1)).to(u.Jy, equivalencies=equivalencies).value
+		flux_out = ERG_TO_JY * flux * wl**2  
+
 		if eflux is not None:
-			eflux_out = (eflux*u.erg/u.s/u.cm**2/(u.nm*0.1)).to(u.Jy, equivalencies=equivalencies).value
+            # a faster version of:
+			# eflux_out = (eflux*u.erg/u.s/u.cm**2/(u.nm*0.1)).to(u.Jy, equivalencies=equivalencies).value
+			eflux_out = ERG_TO_JY * eflux * wl**2
+
 	elif unit_in=='Jy':
-		equivalencies = u.spectral_density(wl*u.micron)
-		flux_out = (flux*u.Jy).to(u.erg/u.s/u.cm**2/(u.nm*0.1), equivalencies=equivalencies).value
+        # a faster version of:
+		# equivalencies = u.spectral_density(wl*u.micron)
+		# flux_out = (flux*u.Jy).to(u.erg/u.s/u.cm**2/(u.nm*0.1), equivalencies=equivalencies).value 
+		flux_out = flux * JY_TO_ERG / (wl**2)
 		if eflux is not None:
-			eflux_out = (eflux*u.Jy).to(u.erg/u.s/u.cm**2/(u.nm*0.1), equivalencies=equivalencies).value
+            # a faster version of:
+			# eflux_out = (eflux*u.Jy).to(u.erg/u.s/u.cm**2/(u.nm*0.1), equivalencies=equivalencies).value
+			eflux_out = eflux * JY_TO_ERG / (wl**2)
 
 	out = {'flux_in': flux, 'flux_out': flux_out, 'wl_in': wl, 'unit_in': unit_in, 'unit_out': unit_out}
 	if eflux is not None: 
